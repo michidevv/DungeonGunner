@@ -8,6 +8,9 @@ public class EnemyController : MonoBehaviour
     Rigidbody2D rigidBody;
 
     [SerializeField]
+    Animator animator;
+
+    [SerializeField]
     float moveSpeed = 3f;
 
     [SerializeField]
@@ -24,6 +27,18 @@ public class EnemyController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (Vector3.Distance(transform.position, PlayerController.instance.transform.position) < visibilityRange) 
+        {
+            moveDirection = PlayerController.instance.transform.position - transform.position;
+            moveDirection.Normalize();
+            rigidBody.velocity = moveDirection * moveSpeed;
+
+            animator.SetBool("isWalking", true);
+        } else
+        {
+            moveDirection = Vector3.zero;
+
+            animator.SetBool("isWalking", false);
+        }
     }
 }

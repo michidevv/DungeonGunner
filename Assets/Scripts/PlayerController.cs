@@ -33,6 +33,11 @@ public class PlayerController : MonoBehaviour
     private Vector2 moveInput;
     private float shotCounter;
 
+    private void Awake()
+    {
+        instance = this;
+    }
+
     // Start is called before the first frame update
     void Start()
     {

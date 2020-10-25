@@ -56,32 +56,48 @@ public class EnemyController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!bodyRenderer.isVisible) return;
-
-        if (Vector3.Distance(transform.position, PlayerController.instance.transform.position) < visibilityRange)
+        if (bodyRenderer.isVisible && PlayerController.instance.gameObject.activeInHierarchy)
         {
-            moveDirection = PlayerController.instance.transform.position - transform.position;
-            moveDirection.Normalize();
-            rigidBody.velocity = moveDirection * moveSpeed;
+            if (Vector3.Distance(transform.position, PlayerController.instance.transform.position) < visibilityRange)
+            {
+                moveDirection = PlayerController.instance.transform.position - transform.position;
+                moveDirection.Normalize();
+                rigidBody.velocity = moveDirection * moveSpeed;
 
-            animator.SetBool("isWalking", true);
-        } else
-        {
-            moveDirection = Vector3.zero;
+                animator.SetBool("isWalking", true);
+            }
+            else
+            {
+                moveDirection = Vector3.zero;
 
-            animator.SetBool("isWalking", false);
-        }
+                animator.SetBool("isWalking", false);
+            }
 
-        if (shouldShoot && !isFiring && 
-            Vector3.Distance(transform.position, PlayerController.instance.transform.position) < shootRange)
-        {
             StartCoroutine(Shoot());
         }
+        else
+        {
+            rigidBody.velocity = Vector3.zero;
+            StopCoroutine(Shoot());
+        }
+
+        
+    }
+
+    private bool ShoudShoot()
+    {
+        return shouldShoot && !isFiring && PlayerController.instance.gameObject.activeInHierarchy &&
+            Vector3.Distance(transform.position, PlayerController.instance.transform.position) < shootRange;
     }
 
     private IEnumerator Shoot()
     {
+        if (!ShoudShoot()) yield break;
+
         isFiring = true;
+
+        AudioManager.instance.PlaySfx(Sfx.Shoot2);
+
         Instantiate(bullet, firePoint.position, firePoint.rotation);
         yield return fireDelay;
         isFiring = false;
@@ -93,9 +109,12 @@ public class EnemyController : MonoBehaviour
     {
         health -= damage;
 
+        AudioManager.instance.PlaySfx(Sfx.EnemyHurt);
+
         if (health <= 0)
         {
             Destroy(gameObject);
+            AudioManager.instance.PlaySfx(Sfx.EnemyDeath);
             int splatterIndex = Random.Range(0, deathSplatters.Length);
             int rotation = Random.Range(0, 4);
             Instantiate(deathSplatters[splatterIndex], transform.position, Quaternion.Euler(0f, 0f, rotation * 90f));

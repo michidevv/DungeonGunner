@@ -16,12 +16,6 @@ public class PlayerBullet : MonoBehaviour
     [SerializeField]
     int damage = 50;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
     // Update is called once per frame
     void Update()
     {
@@ -31,12 +25,15 @@ public class PlayerBullet : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D other)
     {
         Instantiate(impactEffect, transform.position, transform.rotation);
-        Destroy(gameObject);
 
-        if (other.tag == "Enemy")
+        AudioManager.instance.PlaySfx(Sfx.Impact);
+
+        if (other.CompareTag("Enemy"))
         {
             other.GetComponent<EnemyController>()?.DamageEnemy(damage);
         }
+
+        Destroy(gameObject);
     }
 
     private void OnBecameInvisible()

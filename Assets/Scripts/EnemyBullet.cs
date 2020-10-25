@@ -23,7 +23,9 @@ public class EnemyBullet : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.tag == "Player") 
+        AudioManager.instance.PlaySfx(Sfx.Impact);
+
+        if (other.CompareTag("Player")) 
         {
             PlayerHealthController.instance.DamagePlayer();
         }

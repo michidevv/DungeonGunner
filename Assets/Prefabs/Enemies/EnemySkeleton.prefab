@@ -97,8 +97,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 1612099947
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_Sprite: {fileID: -7537196482120660328, guid: 02027016afbc5d544ab92ba819bc8094,
     type: 3}
@@ -164,6 +164,7 @@ MonoBehaviour:
   animator: {fileID: 3976071290963793089}
   moveSpeed: 3
   visibilityRange: 7
+  shootRange: 10
   health: 150
   deathSplatters:
   - {fileID: 8685673953122200555, guid: 85a148d4cc3008d47a8ceff1ad0e9a35, type: 3}
@@ -176,6 +177,7 @@ MonoBehaviour:
   bullet: {fileID: 3268347207063384445, guid: 559058947fabf614cbcc26edc4ec8399, type: 3}
   firePoint: {fileID: 8556986397113059689}
   fireRate: 0.7
+  bodyRenderer: {fileID: 0}
 --- !u!61 &3976071290963793092
 BoxCollider2D:
   m_ObjectHideFlags: 0

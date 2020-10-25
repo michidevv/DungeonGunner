@@ -1,6 +1,14 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
+public enum DashState
+{
+    Inactive,
+    Active,
+    Timeout
+}
 
 public class PlayerController : MonoBehaviour
 {
@@ -8,6 +16,9 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField]
     float moveSpeed = 5f;
+
+    [SerializeField]
+    float dashSpeed = 8f, dashTime = 0.5f, dashTimeout = 1f;
 
     [SerializeField]
     Rigidbody2D rigidBody;
@@ -30,8 +41,18 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     readonly float shotTimeout = 0.2f;
 
+    [SerializeField]
+    public SpriteRenderer bodyRenderer;
+    [SerializeField]
+    bool canMove = true;
+
+    [HideInInspector]
+    public DashState DashState { get; private set; } = DashState.Inactive;
+
     private Vector2 moveInput;
     private float shotCounter;
+
+    private WaitForSeconds dashTimer, dashWaitTimer;
 
     private void Awake()
     {
@@ -42,11 +63,18 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         mainCamera = Camera.main;
+        dashTimer = new WaitForSeconds(dashTime);
+        dashWaitTimer = new WaitForSeconds(dashTimeout);
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (!canMove || LevelManager.instance.IsPaused)
+        {
+            return;
+        }
+
         moveInput.x = Input.GetAxisRaw("Horizontal");
         moveInput.y = Input.GetAxisRaw("Vertical");
         moveInput.Normalize();
@@ -54,7 +82,8 @@ public class PlayerController : MonoBehaviour
         bool isWalking = moveInput != Vector2.zero;
         anim.SetBool("isWalking", isWalking);
 
-        rigidBody.velocity = moveInput * moveSpeed;
+        float speed = DashState == DashState.Active ? dashSpeed : moveSpeed;
+        rigidBody.velocity = moveInput * speed;
 
         Vector3 mousePos = Input.mousePosition;
         Vector3 screenPoint = mainCamera.WorldToScreenPoint(transform.localPosition);
@@ -78,6 +107,7 @@ public class PlayerController : MonoBehaviour
         // TODO: Rewrite with Coroutines.
         if (Input.GetMouseButtonDown(0))
         {
+            AudioManager.instance.PlaySfx(Sfx.Shoot1);
             Instantiate(bulletToFire, crosshair.position, crosshair.rotation);
             shotCounter = shotTimeout;
         }
@@ -87,9 +117,53 @@ public class PlayerController : MonoBehaviour
             shotCounter -= Time.deltaTime;
             if (shotCounter <= 0)
             {
+                AudioManager.instance.PlaySfx(Sfx.Shoot1);
                 Instantiate(bulletToFire, crosshair.position, crosshair.rotation);
                 shotCounter = shotTimeout;
             }
         }
+
+        if (isWalking && Input.GetKeyDown("space") && DashState == DashState.Inactive)
+        {
+            StartCoroutine(Dash());
+        }
+    }
+
+    private IEnumerator Dash()
+    {
+        AudioManager.instance.PlaySfx(Sfx.PlayerDash);
+
+        DashState = DashState.Active;
+        anim.SetTrigger("dash");
+        UIController.instance.SetDashOpacity(0.3f);
+
+        // TODO: Make as an event to prevent circular dependency issue.
+        PlayerHealthController.instance.SetInvulnerability(dashTime);
+
+        yield return dashTimer;
+        StartCoroutine(CooldownDash());
+    }
+
+    private IEnumerator CooldownDash()
+    {
+        DashState = DashState.Timeout;
+        yield return dashWaitTimer;
+        DashState = DashState.Inactive;
+
+        UIController.instance.SetDashOpacity(1f);
+    }
+
+    public void ChangeBodyOpacity(float opacity)
+    {
+        Color c = bodyRenderer.color;
+        bodyRenderer.color = new Color(c.r, c.g, c.b, opacity);
+    }
+
+    public void StopMovement()
+    {
+        canMove = false;
+
+        rigidBody.velocity = Vector2.zero;
+        anim.SetBool("isWalking", false);
     }
 }
